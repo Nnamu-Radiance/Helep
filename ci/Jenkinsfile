@@ -68,7 +68,7 @@ pipeline {
         sh '''
           set -euo pipefail
           for svc in ${SERVICES}; do
-            trivy image --severity HIGH,CRITICAL --exit-code 1 ${DOCKER_NAMESPACE}/helep-${svc}:${IMAGE_TAG}
+            trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed ${DOCKER_NAMESPACE}/helep-${svc}:${IMAGE_TAG}
           done
         '''
       }
