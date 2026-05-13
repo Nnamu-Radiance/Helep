@@ -1,5 +1,27 @@
 pipeline {
-  agent any
+  agent {
+    kubernetes {
+      yaml '''
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+          - name: tools
+            image: radiance84/helep-jenkins-agent:latest
+            imagePullPolicy: Always
+            command: ["sleep"]
+            args: ["infinity"]
+            volumeMounts:
+            - name: docker-sock
+              mountPath: /var/run/docker.sock
+          volumes:
+          - name: docker-sock
+            hostPath:
+              path: /var/run/docker.sock
+      '''
+      defaultContainer 'tools'
+    }
+  }
 
   options {
     disableConcurrentBuilds()
@@ -23,7 +45,6 @@ pipeline {
       steps {
         sh '''
           set -euo pipefail
-          pip install ruff --quiet
           ruff check services
         '''
       }
