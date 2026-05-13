@@ -1,0 +1,109 @@
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+  }
+
+  parameters {
+    string(name: 'DOCKER_NAMESPACE', defaultValue: 'radiance84', description: 'Docker Hub namespace/user')
+    string(name: 'IMAGE_TAG', defaultValue: '0.1.0', description: 'Image tag to build/push/deploy')
+  }
+
+  environment {
+    HELM_CHART = './charts/helep'
+    RELEASE_NAME = 'helep'
+    DEV_NAMESPACE = 'helep'
+    PROD_NAMESPACE = 'prod'
+    SERVICES = 'user-service sos-service dispatch-service notification-service analytics-service'
+  }
+
+  stages {
+    stage('Lint Python') {
+      steps {
+        bat '''
+          @echo off
+          ruff check services
+          if errorlevel 1 exit /b 1
+        '''
+      }
+    }
+
+    stage('Build Docker Images') {
+      steps {
+        bat '''
+          @echo off
+          for %%s in (%SERVICES%) do (
+            docker build -t %DOCKER_NAMESPACE%/helep-%%s:%IMAGE_TAG% services/%%s
+            if errorlevel 1 exit /b 1
+          )
+        '''
+      }
+    }
+
+    stage('Trivy Scan (HIGH+)') {
+      steps {
+        bat '''
+          @echo off
+          for %%s in (%SERVICES%) do (
+            trivy image --severity HIGH,CRITICAL --exit-code 1 %DOCKER_NAMESPACE%/helep-%%s:%IMAGE_TAG%
+            if errorlevel 1 exit /b 1
+          )
+        '''
+      }
+    }
+
+    stage('Push Images') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
+          bat '''
+            @echo off
+            echo %DOCKERHUB_PASS%| docker login -u "%DOCKERHUB_USER%" --password-stdin
+            if errorlevel 1 exit /b 1
+            for %%s in (%SERVICES%) do (
+              docker push %DOCKER_NAMESPACE%/helep-%%s:%IMAGE_TAG%
+              if errorlevel 1 exit /b 1
+            )
+          '''
+        }
+      }
+    }
+
+    stage('Deploy to helep Namespace') {
+      steps {
+        bat '''
+          @echo off
+          helm upgrade --install %RELEASE_NAME% %HELM_CHART% -n %DEV_NAMESPACE% --create-namespace
+          if errorlevel 1 exit /b 1
+        '''
+      }
+    }
+
+    stage('Smoke Test /healthz') {
+      steps {
+        bat '''
+          @echo off
+          powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $services=@('user-service','sos-service','dispatch-service','notification-service','analytics-service'); foreach ($expected in $services) { $svc=(kubectl -n '%DEV_NAMESPACE%' get svc -o jsonpath='{range .items[*]}{.metadata.name}{\"`n\"}{end}' ^| Select-String -Pattern $expected ^| Select-Object -First 1); if (-not $svc) { throw \"No Kubernetes Service found for $expected\" }; $svcName=$svc.ToString().Trim(); $port=(kubectl -n '%DEV_NAMESPACE%' get svc $svcName -o jsonpath='{.spec.ports[0].port}').Trim(); $pod='smoke-' + $expected + '-' + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds(); kubectl -n '%DEV_NAMESPACE%' run $pod --restart=Never --rm --attach --image=curlimages/curl:8.8.0 -- -fsS ('http://{0}:{1}/healthz' -f $svcName,$port) }"
+          if errorlevel 1 exit /b 1
+        '''
+      }
+    }
+
+    stage('Manual Approval for Prod') {
+      steps {
+        input message: 'Deploy HELEP to prod namespace?', ok: 'Deploy to prod'
+      }
+    }
+
+    stage('Deploy to prod Namespace') {
+      steps {
+        bat '''
+          @echo off
+          helm upgrade --install %RELEASE_NAME% %HELM_CHART% -n %PROD_NAMESPACE% --create-namespace
+          if errorlevel 1 exit /b 1
+        '''
+      }
+    }
+  }
+}

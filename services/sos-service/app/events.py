@@ -14,6 +14,7 @@ Partition keying:
 from __future__ import annotations
 import json
 import os
+import time
 from typing import Awaitable, Callable, Iterable
 
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
@@ -60,17 +61,51 @@ class CircuitBreaker:
         self.fail_threshold = fail_threshold
         self.reset_after_s = reset_after_s
         self.fails = 0
+        self.state = "CLOSED"
         self.opened_at: float | None = None
+        self.half_open_probe_used = False
 
     def allow(self) -> bool:
-        # TODO (student): implement open/half-open/closed state machine
+        if self.state == "CLOSED":
+            return True
+
+        if self.state == "OPEN":
+            if self.opened_at is None:
+                self.opened_at = time.monotonic()
+                return False
+            if (time.monotonic() - self.opened_at) >= self.reset_after_s:
+                self.state = "HALF_OPEN"
+                self.half_open_probe_used = False
+            else:
+                return False
+
+        if self.state == "HALF_OPEN":
+            if self.half_open_probe_used:
+                return False
+            self.half_open_probe_used = True
+            return True
+
         return True
 
     def record_success(self) -> None:
         self.fails = 0
+        self.state = "CLOSED"
+        self.opened_at = None
+        self.half_open_probe_used = False
 
     def record_failure(self) -> None:
+        if self.state == "HALF_OPEN":
+            self.state = "OPEN"
+            self.opened_at = time.monotonic()
+            self.fails = self.fail_threshold
+            self.half_open_probe_used = False
+            return
+
         self.fails += 1
+        if self.fails >= self.fail_threshold:
+            self.state = "OPEN"
+            self.opened_at = time.monotonic()
+            self.half_open_probe_used = False
 
 
 _breaker = CircuitBreaker()

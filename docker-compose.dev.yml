@@ -84,7 +84,7 @@ services:
       DB_PATH: /data/sos.db
       JWT_SECRET: dev-only
       SERVICE_PORT: "8002"
-    ports: ["8002:8002"]
+    ports: ["8012:8002"]
     volumes: ["sos-data:/data"]
     depends_on: { kafka: { condition: service_healthy } }
 

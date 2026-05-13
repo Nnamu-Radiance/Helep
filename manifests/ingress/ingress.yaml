@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: helep-ingress
+  namespace: helep
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: helep.local
+      http:
+        paths:
+          - path: /api/users(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: helep-user-service
+                port:
+                  number: 80
+          - path: /api/sos(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: helep-sos-service
+                port:
+                  number: 80
+          - path: /api/dispatch(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: helep-dispatch-service
+                port:
+                  number: 80
+          - path: /api/notifications(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: helep-notification-service
+                port:
+                  number: 80
+          - path: /api/analytics(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: helep-analytics-service
+                port:
+                  number: 80

@@ -13,7 +13,7 @@ Consumes: `sos.triggered`, `sos.cancelled`.
 Produces: `responder.assigned`, `responder.confirmed`, `safety.zone.entered`.
 
 Patterns:
-- Strategy: `app/matching.py` (`MATCHER=nearest|credibility`)
+- Strategy: `app/matching.py` (`MATCHER=nearest|credibility|round_robin`)
 - Saga middle step (choreography)
 - Repository: `app/db.py`
 
