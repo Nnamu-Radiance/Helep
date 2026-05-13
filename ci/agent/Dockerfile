@@ -33,4 +33,7 @@ RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | b
 # Install trivy
 RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
 
+# Give jenkins user access to docker socket
+RUN groupadd -f docker && usermod -aG docker jenkins
+
 USER jenkins
