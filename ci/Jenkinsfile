@@ -89,13 +89,16 @@ pipeline {
     }
 
     stage('Deploy to helep Namespace') {
-      steps {
+    steps {
         sh '''
           set -euo pipefail
           helm upgrade --install ${RELEASE_NAME} ${HELM_CHART} -n ${DEV_NAMESPACE} --create-namespace
+          for svc in user-service sos-service dispatch-service notification-service analytics-service; do
+            kubectl -n ${DEV_NAMESPACE} rollout status deployment/helep-${svc} --timeout=300s
+          done
         '''
-      }
     }
+}
 
     stage('Smoke Test /healthz') {
     steps {
