@@ -119,6 +119,3 @@ async def get_sos(iid: str):
     return {k: row[k] for k in row.keys()}
 
 
-@app.get('/healthz')
-async def healthz():
-    return {'status': 'ok'}

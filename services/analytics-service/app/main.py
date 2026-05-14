@@ -87,6 +87,3 @@ async def stats_events():
     return [dict(r) for r in event_summary()]
 
 
-@app.get('/healthz')
-async def healthz():
-    return {'status': 'ok'}

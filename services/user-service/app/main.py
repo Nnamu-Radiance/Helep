@@ -144,6 +144,3 @@ def find_by_phone_by_id(uid: str):
         c.close()
 
 
-@app.get('/healthz')
-async def healthz():
-    return {'status': 'ok'}

@@ -107,6 +107,3 @@ async def latest(limit: int = 50):
     return [dict(r) for r in rows]
 
 
-@app.get('/healthz')
-async def healthz():
-    return {'status': 'ok'}
