@@ -120,12 +120,6 @@ pipeline {
 }
 
 
-    stage('Manual Approval for Prod') {
-      steps {
-        input message: 'Deploy HELEP to prod namespace?', ok: 'Deploy to prod'
-      }
-    }
-
     stage('Deploy to prod Namespace') {
       steps {
         sh '''
