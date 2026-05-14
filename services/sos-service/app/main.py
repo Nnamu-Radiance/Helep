@@ -117,3 +117,8 @@ async def get_sos(iid: str):
     if not row:
         raise HTTPException(404, "not found")
     return {k: row[k] for k in row.keys()}
+
+
+@app.get('/healthz')
+async def healthz():
+    return {'status': 'ok'}

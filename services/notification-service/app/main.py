@@ -105,3 +105,8 @@ async def readyz():
 async def latest(limit: int = 50):
     rows = list_all(min(max(limit, 1), 500))
     return [dict(r) for r in rows]
+
+
+@app.get('/healthz')
+async def healthz():
+    return {'status': 'ok'}

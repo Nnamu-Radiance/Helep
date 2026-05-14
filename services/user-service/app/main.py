@@ -142,3 +142,8 @@ def find_by_phone_by_id(uid: str):
         return c.execute("SELECT * FROM users WHERE id = ?", (uid,)).fetchone()
     finally:
         c.close()
+
+
+@app.get('/healthz')
+async def healthz():
+    return {'status': 'ok'}

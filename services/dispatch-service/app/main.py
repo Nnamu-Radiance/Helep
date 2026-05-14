@@ -135,3 +135,8 @@ async def confirm(body: ConfirmIn):
         raise HTTPException(404, "no matching assignment")
     await publish("responder.confirmed", {"incident_id": body.incident_id, "status": "EN_ROUTE"}, key=body.incident_id)
     return {"ok": True}
+
+
+@app.get('/healthz')
+async def healthz():
+    return {'status': 'ok'}
