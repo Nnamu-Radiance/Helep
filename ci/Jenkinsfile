@@ -102,7 +102,7 @@ pipeline {
       sh '''
         set -euo pipefail
         for expected in user-service sos-service dispatch-service notification-service analytics-service; do
-          svc=$(kubectl -n ${DEV_NAMESPACE} get svc --no-headers -o custom-columns=":metadata.name" | grep "${expected}" | head -n1 || true)
+          svc=$(kubectl -n helep get svc --no-headers -o custom-columns=":metadata.name" | grep user-service | head -n1)
           if [ -z "${svc}" ]; then
             echo "No Kubernetes Service found for ${expected}"
             exit 1
