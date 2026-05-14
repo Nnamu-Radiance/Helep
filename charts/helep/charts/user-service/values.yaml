@@ -159,3 +159,7 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+env:
+  - name: KAFKA_BOOTSTRAP_SERVERS
+    value: "helep-kafka-kafka-bootstrap.kafka.svc.cluster.local:9092"
