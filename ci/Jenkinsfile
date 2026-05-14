@@ -107,15 +107,15 @@ pipeline {
             echo "No Kubernetes Service found for ${expected}"
             exit 1
           fi
-          port=$(kubectl -n ${DEV_NAMESPACE} get svc "${svc}" -o jsonpath='{.spec.ports[0].port}')
+          port=$(kubectl -n helep get svc "${svc}" -o jsonpath='{.spec.ports[0].port}')
           pod="smoke-${expected}-$(date +%s)"
-          kubectl -n ${DEV_NAMESPACE} run "${pod}" --restart=Never --rm --attach --image=curlimages/curl:8.8.0 -- \
+          kubectl -n helep run "${pod}" --restart=Never --rm --attach --image=curlimages/curl:8.8.0 -- \
             -fsS "http://${svc}:${port}/healthz"
         done
       '''
     }
 }
-Commit and pus
+
 
     stage('Manual Approval for Prod') {
       steps {
