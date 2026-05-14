@@ -19,7 +19,7 @@ from typing import Awaitable, Callable, Iterable
 
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 
-KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP", "localhost:9092")
+KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 
 _producer: AIOKafkaProducer | None = None
 
